@@ -1,13 +1,13 @@
-const toolbox = document.getElementById("toolbox");
+const toolboxItems = document.querySelectorAll(".draggable");
 const canvas = document.getElementById("canvas");
-const form = document.getElementById("property-form");
+const form = document.getElementById("prop-form");
 const propText = document.getElementById("prop-text");
-const propFontSize = document.getElementById("prop-font-size");
+const propFont = document.getElementById("prop-font");
 const propColor = document.getElementById("prop-color");
 let selectedElement = null;
 
-toolbox.querySelectorAll("[draggable=true]").forEach((el) => {
-  el.addEventListener("dragstart", (e) => {
+toolboxItems.forEach((item) => {
+  item.addEventListener("dragstart", (e) => {
     e.dataTransfer.setData("type", e.target.dataset.type);
   });
 });
@@ -15,51 +15,52 @@ toolbox.querySelectorAll("[draggable=true]").forEach((el) => {
 canvas.addEventListener("drop", (e) => {
   e.preventDefault();
   const type = e.dataTransfer.getData("type");
-  const newEl = document.createElement("div");
-  newEl.className = "canvas-element";
-  newEl.setAttribute("contenteditable", "true");
+  const el = document.createElement("div");
+  el.classList.add("canvas-element");
 
-  switch (type) {
-    case "text":
-      newEl.textContent = "Editable text";
-      break;
-    case "image":
-      newEl.innerHTML =
-        '<img src="https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.skyweaver.net%2Fmedia%2Fwallpapers%2F&psig=AOvVaw2_2gkEiTOtLPBmKvdvsraC&ust=1749443083812000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCPiW07_94I0DFQAAAAAdAAAAABAE" width="100%" />';
-      break;
-    case "button":
-      newEl.innerHTML = "<button>Click Me</button>";
-      break;
+  if (type === "text") {
+    el.textContent = "Editable Text";
+  } else if (type === "image") {
+    el.innerHTML = '<img src="https://via.placeholder.com/150" width="100%" />';
+  } else if (type === "button") {
+    el.innerHTML = "<button>Click Me</button>";
   }
 
-  newEl.addEventListener("click", () => {
-    selectedElement = newEl;
+  el.addEventListener("click", () => {
+    selectedElement = el;
     form.style.display = "block";
-    const innerText =
-      selectedElement.innerText ||
-      selectedElement.querySelector("img, button")?.src ||
-      "";
-    propText.value = innerText;
-    propFontSize.value =
-      parseInt(window.getComputedStyle(selectedElement).fontSize) || 16;
-    propColor.value = rgbToHex(window.getComputedStyle(selectedElement).color);
+    if (el.querySelector("img")) {
+      propText.value = el.querySelector("img").src;
+    } else if (el.querySelector("button")) {
+      propText.value = el.querySelector("button").textContent;
+    } else {
+      propText.value = el.textContent;
+    }
+    propFont.value = parseInt(window.getComputedStyle(el).fontSize) || 16;
+    propColor.value = rgbToHex(window.getComputedStyle(el).color);
   });
 
-  canvas.appendChild(newEl);
+  canvas.appendChild(el);
 });
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
-  if (selectedElement) {
-    if (selectedElement.querySelector("img")) {
-      selectedElement.querySelector("img").src = propText.value;
-    } else if (selectedElement.querySelector("button")) {
-      selectedElement.querySelector("button").textContent = propText.value;
-    } else {
-      selectedElement.textContent = propText.value;
-    }
-    selectedElement.style.fontSize = propFontSize.value + "px";
-    selectedElement.style.color = propColor.value;
+  if (!selectedElement) return;
+  const val = propText.value;
+  const size = propFont.value + "px";
+  const color = propColor.value;
+
+  if (selectedElement.querySelector("img")) {
+    selectedElement.querySelector("img").src = val;
+  } else if (selectedElement.querySelector("button")) {
+    const btn = selectedElement.querySelector("button");
+    btn.textContent = val;
+    btn.style.color = color;
+    btn.style.fontSize = size;
+  } else {
+    selectedElement.textContent = val;
+    selectedElement.style.fontSize = size;
+    selectedElement.style.color = color;
   }
 });
 
